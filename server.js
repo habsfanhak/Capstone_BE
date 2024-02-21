@@ -14,7 +14,7 @@ app.get("/", (req, res) => {
 
 userService.connect()
 .then(() => {
-    app.listen(HTTP_PORT, () => { console.log("API listening on: " + HTTP_PORT) });  
+    app.listen(HTTP_PORT, () => { console.log("API started on: " + HTTP_PORT) });  
 })
 .catch((err) => {
     console.log("Unable to start server", err)
