@@ -62,3 +62,22 @@ module.exports.registerRegUser = function (userData) {
             }));       
         });
 }
+
+module.exports.login = function (userData) {
+    return new Promise(function (resolve, reject) {
+
+        User.findOne({ email: userData.email })
+            .exec()
+            .then(user => {
+                bcrypt.compare(userData.password, user.password).then(res => {
+                    if (res === true) {
+                        resolve(user);
+                    } else {
+                        reject("Incorrect password for user " + userData.email );
+                    }
+                });
+            }).catch(err => {
+                reject("Unable to find user " + userData.email);
+            });
+    });
+}
