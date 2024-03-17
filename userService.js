@@ -20,6 +20,19 @@ let userSchema = new Schema({
 
 let User;
 
+let bikeSchema = new Schema({
+    brand: String,
+    model: String,
+    type: String,
+    wheelSize: Int32Array,
+    frame_material: String,
+    suspension_type: String,
+    price: Int32Array,
+    available_quantity: Int32Array,
+}, { collection: 'bikes' });
+
+let Bike;
+
 module.exports.connect = function () {
     return new Promise(function (resolve, reject) {
         db = mongoose.createConnection(mongoDBConnectionString);
@@ -31,6 +44,7 @@ module.exports.connect = function () {
         db.once('open', () => {
             console.log("Connected to DB instance.")
             User = db.model("users", userSchema);
+            Bike = db.model("bikes", bikeSchema);
             resolve();
         });
     });
@@ -78,6 +92,18 @@ module.exports.login = function (userData) {
                 });
             }).catch(err => {
                 reject("Unable to find user " + userData.email);
+            });
+    });
+}
+
+module.exports.getBikes = function () {
+    return new Promise(function (resolve, reject) {
+        Bike.find({})
+            .exec()
+            .then(bikes => {
+                resolve(bikes);
+            }).catch(err => {
+                reject("Unable to find bikes");
             });
     });
 }

@@ -74,6 +74,16 @@ app.post("/login", (req, res) => {
     });
 })
 
+app.get("/bikes", passport.authenticate('jwt', { session: false }), (req, res) => {
+    userService.getBikes()
+    .then((bikes) => {
+        res.json(bikes);
+    }).catch((msg) => {
+        res.status(422).json({ "message": msg });
+    });
+})
+
+
 userService.connect()
 .then(() => {
     app.listen(HTTP_PORT, () => { console.log("API started on: " + HTTP_PORT) });  
