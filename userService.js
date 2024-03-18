@@ -24,11 +24,11 @@ let bikeSchema = new Schema({
     brand: String,
     model: String,
     type: String,
-    wheelSize: Int32Array,
+    wheelSize: Number,
     frame_material: String,
     suspension_type: String,
-    price: Int32Array,
-    available_quantity: Int32Array,
+    price: Number,
+    available_quantity: Number,
 }, { collection: 'bikes' });
 
 let Bike;
