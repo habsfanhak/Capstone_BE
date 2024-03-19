@@ -84,6 +84,33 @@ app.get("/bikes", (req, res) => {
 })
 
 
+const checkAdmin = (req, res, next) => {
+    // Extract the JWT token from the request headers
+    const token = req.headers.authorization.replace('JWT ', '');
+    
+    // Decode the JWT token
+    const decodedToken = jwt.decode(token);
+    
+    // Check if the decoded token contains the authuser property
+    if (decodedToken && decodedToken.admin) {
+        // If authuser is present, proceed to the next middleware
+        next();
+    } else {
+        // If authuser is not present, send an error response
+        res.status(403).json({ "message": "You are not authorized to access this resource" });
+    }
+};
+
+app.post("/addBike", passport.authenticate('jwt', { session: false }), checkAdmin, (req, res) => {
+    userService.addBike(req.body)
+    .then((msg) => {
+        res.json({ "message": msg });
+    }).catch((msg) => {
+        res.status(422).json({ "message": msg });
+    });
+})
+
+
 userService.connect()
 .then(() => {
     app.listen(HTTP_PORT, () => { console.log("API started on: " + HTTP_PORT) });  

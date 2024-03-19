@@ -107,3 +107,28 @@ module.exports.getBikes = function () {
             });
     });
 }
+
+// add new bike
+module.exports.addBike = function (bikeData) {
+    return new Promise(function (resolve, reject) {
+        Bike.create(
+            {
+                "brand" : bikeData.brand,
+                "model" : bikeData.model,
+                "type" : bikeData.type,
+                "wheelSize" : bikeData.wheelSize,
+                "frame_material" : bikeData.frame_material,
+                "suspension_type" : bikeData.suspension_type,
+                "price" : bikeData.price,
+                "available_quantity" : bikeData.available_quantity
+            }
+        )
+            .then((data) => {
+                resolve(data);
+            })
+            .catch((err) => {
+                reject(`Unable to update. Error: ${err}`);
+            });
+    });
+}
+
