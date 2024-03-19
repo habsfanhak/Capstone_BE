@@ -74,7 +74,7 @@ app.post("/login", (req, res) => {
     });
 })
 
-app.get("/bikes", passport.authenticate('jwt', { session: false }), (req, res) => {
+app.get("/bikes", (req, res) => {
     userService.getBikes()
     .then((bikes) => {
         res.json(bikes);
