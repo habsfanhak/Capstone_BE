@@ -20,6 +20,19 @@ let userSchema = new Schema({
 
 let User;
 
+let bikeSchema = new Schema({
+    brand: String,
+    model: String,
+    type: String,
+    wheelSize: Number,
+    frame_material: String,
+    suspension_type: String,
+    price: Number,
+    available_quantity: Number,
+}, { collection: 'bikes' });
+
+let Bike;
+
 module.exports.connect = function () {
     return new Promise(function (resolve, reject) {
         db = mongoose.createConnection(mongoDBConnectionString);
@@ -31,6 +44,7 @@ module.exports.connect = function () {
         db.once('open', () => {
             console.log("Connected to DB instance.")
             User = db.model("users", userSchema);
+            Bike = db.model("bikes", bikeSchema);
             resolve();
         });
     });
@@ -81,3 +95,40 @@ module.exports.login = function (userData) {
             });
     });
 }
+
+module.exports.getBikes = function () {
+    return new Promise(function (resolve, reject) {
+        Bike.find({})
+            .exec()
+            .then(bikes => {
+                resolve(bikes);
+            }).catch(err => {
+                reject("Unable to find bikes");
+            });
+    });
+}
+
+// add new bike
+module.exports.addBike = function (bikeData) {
+    return new Promise(function (resolve, reject) {
+        Bike.create(
+            {
+                "brand" : bikeData.brand,
+                "model" : bikeData.model,
+                "type" : bikeData.type,
+                "wheelSize" : bikeData.wheelSize,
+                "frame_material" : bikeData.frame_material,
+                "suspension_type" : bikeData.suspension_type,
+                "price" : bikeData.price,
+                "available_quantity" : bikeData.available_quantity
+            }
+        )
+            .then((data) => {
+                resolve(data);
+            })
+            .catch((err) => {
+                reject(`Unable to update. Error: ${err}`);
+            });
+    });
+}
+
