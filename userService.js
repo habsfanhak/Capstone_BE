@@ -77,6 +77,33 @@ module.exports.registerRegUser = function (userData) {
         });
 }
 
+module.exports.registerAdminUser = function (userData) {
+    return new Promise(function (resolve, reject) {
+        bcrypt.hash(userData.password, 10).then(hash => {
+
+            userData.password = hash;
+            
+            User.create(
+            {
+                "email" : userData.email,
+                "fullName" : userData.fullName,
+                "password" : userData.password,
+                "phoneNumber" : userData.phoneNumber,
+                "admin" : userData.admin,
+                "authadmin" : false
+            }
+            )
+                .then((data) => {
+                resolve(data);
+                })
+                .catch((err) => {
+                reject(`Unable to update. Error: ${err}`);
+                });
+            }).catch((err_ => {
+            }));       
+        });
+}
+
 module.exports.login = function (userData) {
     return new Promise(function (resolve, reject) {
 
