@@ -15,10 +15,27 @@ let userSchema = new Schema({
     password: String,
     phoneNumber: Number,
     admin: Boolean,
-    authadmin: Boolean
+    authadmin: Boolean,
+    paymentMethods: [{
+        cardNum: String,
+        nameOnCard: String,
+        expiry: String,
+        cvv: String,
+        postalCode: String
+    }]
 }, { collection: 'users' });
 
 let User;
+
+let resetSchema = new Schema({
+    email: String,
+    resetCode: {
+        type: String,
+        unique: true
+    },
+}, { collection: 'reset-tokens' });
+
+let Reset;
 
 let bikeSchema = new Schema({
     brand: String,
@@ -45,6 +62,7 @@ module.exports.connect = function () {
             console.log("Connected to DB instance.")
             User = db.model("users", userSchema);
             Bike = db.model("bikes", bikeSchema);
+            Reset = db.model("reset-tokens", resetSchema);
             resolve();
         });
     });
@@ -105,5 +123,147 @@ module.exports.getBikes = function () {
             }).catch(err => {
                 reject("Unable to find bikes");
             });
+    });
+}
+
+module.exports.createResetToken = function(userEmail){
+    const newResetCode = Math.floor(Math.random() * 9000000) + 1000000;
+    const code = newResetCode.toString();
+
+    Reset.create({
+        "email" : userEmail,
+        "resetCode" : code,
+    });
+
+    return code;
+}
+
+module.exports.setNewPass = function(userResetCode, newPass) {
+    return new Promise(async function(resolve, reject) {
+        try {
+            const token = await Reset.findOne({ resetCode: userResetCode });
+
+            if (!token) {
+                reject(456);
+                return;
+            }
+
+            const hashedPassword = await bcrypt.hash(newPass, 10);
+
+            const updatedUser = await User.findOneAndUpdate(
+                { email: token.email },
+                { password: hashedPassword },
+                { new: true }
+            );
+
+            if (!updatedUser) {
+                reject(421);
+                return;
+            }
+
+            await Reset.deleteMany({ email: token.email });
+
+            resolve("Password changed successfully");
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
+
+module.exports.addPayment = function(userEmail, cardNum, name, expiry, cvv, postalCode){
+    return new Promise(function (resolve, reject){
+        bcrypt.hash(cardNum, 20).then(hash => { cardNum = hash; });
+        bcrypt.hash(expiry, 7).then(hash => { expiry = hash; });
+        bcrypt.hash(cvv, 5).then(hash => { cvv = hash; });
+
+        User.findOneAndUpdate(
+            {email: userEmail},
+            {$push: {paymentMethods: {
+                cardNum: cardNum,
+                nameOnCard: name,
+                expiry: expiry,
+                cvv: cvv,
+                postalCode: postalCode
+            }}},
+            {new: true},
+        ).exec().then(()=>{
+            resolve("Card Added");
+        }).catch((err)=>{
+            reject(err);
+        });
+    });
+}
+
+module.exports.getUserPayment = function (email){
+    return new Promise(function (resolve, reject){
+        User.findOne({email}).exec().then((user)=>{
+            if(user){
+                if(user.paymentMethods && user.paymentMethods.length > 0){
+                    resolve(user.paymentMethods);
+                }
+                else{
+                    resolve([]);
+                }
+            }
+            else{
+                reject("Couldn't Find User");
+            }  
+        }).catch((err)=>{
+            reject(err);
+        })
+    });
+}
+
+module.exports.deletePayment = function(userEmail, num){
+    return new Promise(function (resolve, reject){
+        User.findOneAndUpdate(
+            {email: userEmail},
+            {$pull: {paymentMethods: {cardNum: num}}},
+        ).exec().then(()=>{
+            resolve("Deleted");
+        }).catch((err)=>{
+            reject(err);
+        });
+    });
+}
+
+module.exports.getPayment = function(userEmail, cvv){
+    return new Promise(async function (resolve, reject){
+        console.log(userEmail);
+        const user = await User.findOne({email: userEmail});
+        if(user){
+            if(user.paymentMethods && user.paymentMethods.length > 0){
+                const payment = user.paymentMethods.find(payment => payment.cvv === cvv);
+                if(payment){
+                    resolve(payment);
+                }
+                else{
+                    reject("Card Not Found");
+                }
+            }
+        }
+        else{
+            reject("User Not Found");
+        }
+    });
+}
+
+module.exports.updatePayment = function(userEmail, cardNum, name, expiry, cvv, postalCode){
+    return new Promise(function (resolve, reject){
+        User.findOneAndUpdate(
+            {email: userEmail, 'paymentMethods.cvv': cvv},
+            {$set: {
+                'paymentMethods.$.cardNum': cardNum,
+                'paymentMethods.$.nameOnCard': name,
+                'paymentMethods.$.expiry': expiry,
+                'paymentMethods.$.cvv': cvv,
+                'paymentMethods.$.postalCode': postalCode,
+            }},
+            {new: true}
+        ).exec().then(()=>{
+            resolve("Updated Payment Details");
+        }).catch((err)=>{
+            reject(err);
+        });
     });
 }
