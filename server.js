@@ -48,8 +48,33 @@ app.use(passport.initialize());
 
 const HTTP_PORT = process.env.PORT || 8080;
 
+const checkAuth = (req, res, next) => {
+    // Extract the JWT token from the request headers
+    const token = req.headers.authorization.replace('JWT ', '');
+    
+    // Decode the JWT token
+    const decodedToken = jwt.decode(token);
+    // Check if the decoded token contains the authuser property
+    if (decodedToken && decodedToken.authadmin) {
+        // If authuser is present, proceed to the next middleware
+        next();
+    } else {
+        // If authuser is not present, send an error response
+        res.status(403).json({ "message": "You are not authorized to access this resource" });
+    }
+};
+
 app.post("/register", (req, res) => {
     userService.registerRegUser(req.body)
+    .then((msg) => {
+        res.json({ "message": msg });
+    }).catch((msg) => {
+        res.status(422).json({ "message": msg });
+    });
+})
+
+app.post("/registeradmin", passport.authenticate('jwt', { session: false }), checkAuth, (req, res) => {
+    userService.registerAdminUser(req.body)
     .then((msg) => {
         res.json({ "message": msg });
     }).catch((msg) => {
@@ -171,6 +196,33 @@ app.get("/bikes", (req, res) => {
     userService.getBikes()
     .then((bikes) => {
         res.json(bikes);
+    }).catch((msg) => {
+        res.status(422).json({ "message": msg });
+    });
+})
+
+
+const checkAdmin = (req, res, next) => {
+    // Extract the JWT token from the request headers
+    const token = req.headers.authorization.replace('JWT ', '');
+    
+    // Decode the JWT token
+    const decodedToken = jwt.decode(token);
+    
+    // Check if the decoded token contains the authuser property
+    if (decodedToken && decodedToken.admin) {
+        // If authuser is present, proceed to the next middleware
+        next();
+    } else {
+        // If authuser is not present, send an error response
+        res.status(403).json({ "message": "You are not authorized to access this resource" });
+    }
+};
+
+app.post("/addBike", passport.authenticate('jwt', { session: false }), checkAdmin, (req, res) => {
+    userService.addBike(req.body)
+    .then((msg) => {
+        res.json({ "message": msg });
     }).catch((msg) => {
         res.status(422).json({ "message": msg });
     });
