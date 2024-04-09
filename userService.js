@@ -38,6 +38,7 @@ let resetSchema = new Schema({
 let Reset;
 
 let bikeSchema = new Schema({
+    image: String,
     brand: String,
     model: String,
     type: String,
@@ -152,6 +153,60 @@ module.exports.getBikes = function () {
             });
     });
 }
+
+module.exports.getUsers = function () {
+    return new Promise(function (resolve, reject) {
+        User.find({})
+            .exec()
+            .then(users => {
+                resolve(users);
+            }).catch(err => {
+                reject("Unable to find users");
+            });
+    });
+}
+
+module.exports.getSingle = function (email) {
+    return new Promise(function (resolve, reject) {
+        User.find({email : email})
+            .exec()
+            .then(users => {
+                resolve(users);
+            }).catch(err => {
+                reject("Unable to find users");
+            });
+    });
+}
+
+module.exports.updateSingle = function (user) {
+    return new Promise(function (resolve, reject) {
+        User.updateOne({email : user.email}, {
+            email: user.email,
+            admin: user.admin,
+            fullName: user.fullName
+        })
+        .exec()
+        .then(msg => {
+            resolve(msg);
+        }).catch(err => {
+            reject("Unable to update user.");
+        });
+    });
+}
+
+module.exports.deleteSingle = function (user) {
+    return new Promise(function (resolve, reject) {
+        User.deleteOne({email : user.email})
+        .exec()
+        .then(msg => {
+            resolve(msg);
+        }).catch(err => {
+            reject("Unable to delete user.");
+        });
+    });
+}
+
+
 
 module.exports.createResetToken = function(userEmail){
     const newResetCode = Math.floor(Math.random() * 9000000) + 1000000;
@@ -296,10 +351,11 @@ module.exports.updatePayment = function(userEmail, cardNum, name, expiry, cvv, p
 }
 
 // add new bike
-module.exports.addBike = function (bikeData) {
+module.exports.addBike = function (bikeData, imagePath) {
     return new Promise(function (resolve, reject) {
         Bike.create(
             {
+                "image": imagePath,
                 "brand" : bikeData.brand,
                 "model" : bikeData.model,
                 "type" : bikeData.type,

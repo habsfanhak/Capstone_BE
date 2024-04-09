@@ -1,6 +1,10 @@
 const express = require('express')
 const app = express()
 const nodemailer = require("nodemailer");
+const bodyParser = require('body-parser');
+
+app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ limit: '100mb', extended: true, parameterLimit: 50000 }));
 
 
 const dotenv = require("dotenv");
@@ -52,6 +56,7 @@ passport.use(strategy);
 app.use(cors());
 app.use(express.json());
 app.use(passport.initialize());
+// Parse application/json
 
 const HTTP_PORT = process.env.PORT || 8080;
 
@@ -208,6 +213,46 @@ app.get("/bikes", (req, res) => {
     });
 })
 
+app.get("/users", passport.authenticate('jwt', { session: false }), checkAuth, (req, res) => {
+    userService.getUsers()
+    .then((users) => {
+        res.json(users);
+    }).catch((msg) => {
+        res.status(422).json({ "message": msg });
+    });
+})
+
+app.put("/singleuser", passport.authenticate('jwt', { session: false }), checkAuth, (req, res) => {
+    userService.getSingle(req.body.email)
+    .then((user) => {
+        res.json(user);
+    }).catch((msg) => {
+        console.log(msg)
+        res.status(422).json({ "message": msg });
+    });
+})
+
+app.post("/singleuser", passport.authenticate('jwt', { session: false }), checkAuth, (req, res) => {
+    userService.updateSingle(req.body)
+    .then((user) => {
+        res.json(user);
+    }).catch((msg) => {
+        console.log(msg)
+        res.status(422).json({ "message": msg });
+    });
+})
+
+app.delete("/singleuser", passport.authenticate('jwt', { session: false }), checkAuth, (req, res) => {
+    userService.deleteSingle(req.body)
+    .then((user) => {
+        res.json(user);
+    }).catch((msg) => {
+        console.log(msg)
+        res.status(422).json({ "message": msg });
+    });
+})
+
+
 
 const checkAdmin = (req, res, next) => {
     // Extract the JWT token from the request headers
@@ -230,31 +275,30 @@ app.post("/addBike", passport.authenticate('jwt', { session: false }), checkAdmi
 
     const bikeInfo = req.body;
 
-    // Assuming req.body.image contains the base64 encoded string
+    console.log(req.body)
+
     const base64Image = req.body.image;
 
-    // Convert the base64 string to a buffer
     const imageBuffer = Buffer.from(base64Image, 'base64');
 
+    const currentDate = new Date();
+    const fileName = `image_${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}_${currentDate.getHours()}-${currentDate.getMinutes()}-${currentDate.getSeconds()}`;
 
-    // Upload image to Cloudinary
-    cloudinary.uploader.upload_stream({ resource_type: "image" }, (error, result) => {
+    cloudinary.uploader.upload_stream({ resource_type: "image", public_id: fileName }, (error, result) => {
         if (error) {
             console.error("Error uploading image to Cloudinary:", error);
-            // Handle error
         } else {
             console.log("Image uploaded successfully:", result);
-            // Handle success
         }
     }).end(imageBuffer);
 
-      // Call userService.addBike() with both bike information and image path
-    //   userService.addBike(bikeInfo, imagePath)
-    //     .then((msg) => {
-    //       res.json({ "message": msg });
-    //     }).catch((msg) => {
-    //       res.status(422).json({ "message": msg });
-    //     });
+
+    userService.addBike(bikeInfo, fileName)
+    .then((msg) => {
+        res.json({ "message": msg });
+    }).catch((msg) => {
+        res.status(422).json({ "message": msg });
+    });
 })
 
 
