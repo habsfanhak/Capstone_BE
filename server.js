@@ -13,6 +13,14 @@ const jwt = require('jsonwebtoken');
 const passportJWT = require("passport-jwt");
 
 const userService = require('./userService.js')
+const cloudinary = require('cloudinary').v2; // Import Cloudinary SDK
+
+          
+cloudinary.config({ 
+  cloud_name: process.env.CLOUD_NAME, 
+  api_key: process.env.API_KEY, 
+  api_secret: process.env.API_SECRET 
+});
 
 var ExtractJwt = passportJWT.ExtractJwt;
 var JwtStrategy = passportJWT.Strategy;
@@ -23,7 +31,6 @@ jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme("jwt");
 jwtOptions.secretOrKey = process.env.JWT_SECRET;
 
 let strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) {
-    //console.log('payload received', jwt_payload);
 
     if (jwt_payload) {
 
@@ -220,12 +227,34 @@ const checkAdmin = (req, res, next) => {
 };
 
 app.post("/addBike", passport.authenticate('jwt', { session: false }), checkAdmin, (req, res) => {
-    userService.addBike(req.body)
-    .then((msg) => {
-        res.json({ "message": msg });
-    }).catch((msg) => {
-        res.status(422).json({ "message": msg });
-    });
+
+    const bikeInfo = req.body;
+
+    // Assuming req.body.image contains the base64 encoded string
+    const base64Image = req.body.image;
+
+    // Convert the base64 string to a buffer
+    const imageBuffer = Buffer.from(base64Image, 'base64');
+
+
+    // Upload image to Cloudinary
+    cloudinary.uploader.upload_stream({ resource_type: "image" }, (error, result) => {
+        if (error) {
+            console.error("Error uploading image to Cloudinary:", error);
+            // Handle error
+        } else {
+            console.log("Image uploaded successfully:", result);
+            // Handle success
+        }
+    }).end(imageBuffer);
+
+      // Call userService.addBike() with both bike information and image path
+    //   userService.addBike(bikeInfo, imagePath)
+    //     .then((msg) => {
+    //       res.json({ "message": msg });
+    //     }).catch((msg) => {
+    //       res.status(422).json({ "message": msg });
+    //     });
 })
 
 
