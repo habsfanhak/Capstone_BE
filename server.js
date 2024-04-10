@@ -11,7 +11,6 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const cors = require('cors');
-app.use(cors());
 
 const passport = require("passport");
 const jwt = require('jsonwebtoken');
@@ -19,9 +18,6 @@ const passportJWT = require("passport-jwt");
 
 const userService = require('./userService.js')
 const cloudinary = require('cloudinary').v2; // Import Cloudinary SDK
-
-app.use(bodyParser.json({ limit: '100mb' }));
-app.use(bodyParser.urlencoded({ limit: '100mb', extended: true, parameterLimit: 50000 }));
 
           
 cloudinary.config({ 
@@ -56,6 +52,8 @@ let strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) {
 
 passport.use(strategy);
 
+
+app.use(cors());
 app.use(express.json());
 app.use(passport.initialize());
 // Parse application/json
