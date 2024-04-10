@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 let mongoDBConnectionString = process.env.MONGO_URL;
 
@@ -316,5 +317,61 @@ module.exports.addBike = function (bikeData) {
             .catch((err) => {
                 reject(`Unable to update. Error: ${err}`);
             });
+    });
+}
+
+module.exports.getBike = async function(bikeModel){
+    return new Promise(async function (resolve, reject){
+        console.log(bikeModel);
+        Bike.findOne({model : bikeModel}).exec().then((bike)=>{
+            resolve(bike);
+        }).catch((err) => {
+            console.log("Didn't Find");
+            reject(err);
+        });
+    });
+}
+
+module.exports.pruchase = async function(bikeBrand, bikeModel, bikePrice){
+    return new Promise(async function (resolve, reject){
+        const productName = `${bikeBrand} ${bikeModel}`;
+        const unitPrice = Math.round(bikePrice * 100);
+        console.log(unitPrice);
+
+        const price = await stripe.prices.create({
+            unit_amount: unitPrice,
+            currency: 'cad',
+            product_data: {
+                name: productName,
+            },
+        });
+
+        const session = await stripe.checkout.sessions.create({
+            mode: "payment",
+            success_url: `${process.env.LIVE_URL}/paymentSuccess?model=${bikeModel}`,
+            cancel_url: `${process.env.LIVE_URL}/paymentFailed`,
+            line_items: [{
+
+                quantity: 1,
+                price: price.id
+            }]
+        });
+
+        if(session){
+            resolve(session.url);
+        }
+        else{
+            reject("An Error Occured With The Session");
+        }
+    });
+}
+
+module.exports.updateQuantity = function(bikeModel){
+    return new Promise(function (resolve, reject){
+        Bike.findOneAndUpdate({model : bikeModel}, { $inc: { available_quantity: -1 } }).exec().then(() => {
+            resolve("Quantity Updated");
+        }).catch((err) => {
+            reject(err);
+        });
     });
 }
