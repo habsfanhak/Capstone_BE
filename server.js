@@ -301,6 +301,31 @@ app.post("/addBike", passport.authenticate('jwt', { session: false }), checkAdmi
     });
 })
 
+app.post("/getBike", async (req, res) =>{
+    await userService.getBike(req.body.model).then((bike) =>{
+        res.status(200).json(bike);
+    }).catch((err) => {
+        res.status(400).json({"message" : err});
+    });
+})
+
+app.post("/purchase", async (req, res) =>{
+    await userService.pruchase(req.body.brand, req.body.model, req.body.price).then((url) =>{
+        res.status(200).json(url);
+    }).catch((err) => {
+        res.status(400).json({"message" : err});
+    });
+})
+
+app.post("/updatequantity", (req, res) =>{
+    userService.updateQuantity(req.body.model).then(() =>{
+        console.log("Quantity Updated");
+        res.status(200).json("Quantity Updated");
+    }).catch((err) => {
+        res.status(400).json({"message" : err});
+    });
+})
+
 
 userService.connect()
 .then(() => {
