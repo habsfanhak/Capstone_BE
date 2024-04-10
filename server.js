@@ -14,8 +14,6 @@ app.use(bodyParser.urlencoded({ limit: '100mb', extended: true, parameterLimit: 
 const dotenv = require("dotenv");
 dotenv.config();
 
-const cors = require('cors');
-
 const passport = require("passport");
 const jwt = require('jsonwebtoken');
 const passportJWT = require("passport-jwt");
