@@ -20,6 +20,9 @@ const passportJWT = require("passport-jwt");
 const userService = require('./userService.js')
 const cloudinary = require('cloudinary').v2; // Import Cloudinary SDK
 
+app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ limit: '100mb', extended: true, parameterLimit: 50000 }));
+
           
 cloudinary.config({ 
   cloud_name: process.env.CLOUD_NAME, 
