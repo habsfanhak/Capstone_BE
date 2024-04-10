@@ -11,6 +11,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const cors = require('cors');
+app.use(cors());
 
 const passport = require("passport");
 const jwt = require('jsonwebtoken');
@@ -52,8 +53,6 @@ let strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) {
 
 passport.use(strategy);
 
-
-app.use(cors());
 app.use(express.json());
 app.use(passport.initialize());
 // Parse application/json
