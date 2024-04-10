@@ -1,5 +1,9 @@
 const express = require('express')
 const app = express()
+
+const cors = require('cors');
+app.use(cors());
+
 const nodemailer = require("nodemailer");
 const bodyParser = require('body-parser');
 
@@ -52,8 +56,6 @@ let strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) {
 
 passport.use(strategy);
 
-
-app.use(cors());
 app.use(express.json());
 app.use(passport.initialize());
 // Parse application/json
